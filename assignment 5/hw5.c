@@ -304,6 +304,4 @@ Reformat into 3 cols of x y height, pipe into mathematica for fancy graph
 
 ListPlot3D[Import["/path/to/file", "Memory Mountain"]]
 
-Ideally, if I had mathematica or knew how to use gnuplot, I'd have a 3d plot to analyze, but I don't, and this is due in a few hours. Does anybody even read these?
-
 */
