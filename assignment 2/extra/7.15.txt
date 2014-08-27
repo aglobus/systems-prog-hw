@@ -1,0 +1,26 @@
+Performing the following tasks will help you become more familiar with the various tools for manipulating object files.
+A. How many object files are contained in the versions of libc.a and libm.a on your system?
+
+aglobus@ada:/usr/lib32$ ar -t libc.a | wc -l
+1523
+aglobus@ada:/usr/lib32$ ar -t libm.a | wc -l
+407
+B. Does gcc -O2 produce different executable code than gcc -O2 -g?
+
+Yes, the -O2 flag sets gcc’s optimization level, but gcc will also allow you to run -g with any level of -O. From the man pages, “The shortcuts taken by optimized code may occasionally produce surprising results: some variables you declared may not exist at all; flow of control may briefly move where you did not expect it; some statements may not be executed because they compute constant results or their values are already at hand; some statements may execute in different places because they have been moved out of loops.” It’s possible to debug optimized output and it can produce different executable code. 
+C. What shared libraries does the gcc driver on your system use?
+
+On my macintosh (substituting clang for gcc):
+
+merlin% otool -L /usr/bin/clang
+/usr/bin/clang:
+	/usr/lib/libxcselect.dylib (compatibility version 1.0.0, current version 1.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1197.1.1)
+
+On the school’s linux box:
+
+aglobus@ada:~$ ldd /usr/bin/gcc
+	linux-vdso.so.1 =>  (0x00007fff949f6000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fdf6762f000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fdf67a16000)
+

@@ -1,0 +1,47 @@
+
+
+==BEFORE==
+
+(lldb) expr -f hex -- buffer[0]
+(int) $24 = 0x2c216808
+(lldb) expr -f hex -- char x = *((char *)(buffer)); x
+(char) $25 = 0x08
+(lldb) expr -f hex -- char x = *((char *)(buffer)+1); x
+(char) $26 = 0x68
+(lldb) expr -f hex -- char x = *((char *)(buffer)+2); x
+(char) $27 = 0x21
+(lldb) expr -f hex -- char x = *((char *)(buffer)+3); x
+(char) $28 = 0x2c
+(lldb) f
+frame #0: 0x0000000100000e2f a.out`main(argc=2, argv=0x00007fff5fbffb50) + 287 at hw3.c:40
+   37  	  fclose(fp);
+   38  	
+   39  	  /* buffer holds the contents of file */
+-> 40  	  printf("%x\n", *buffer);
+   41  	
+   42  	  /* first stage */
+   43  	  /* 'a' -> swap bytes c0 and c3 <c0, c1, c2, c3> */
+(lldb) 
+
+==AFTER STAGE 1==
+
+(lldb) expr -f hex -- buffer[0]
+(int) $19 = 0x0821682c
+(lldb) expr -f hex -- char x = *((char *)(buffer)); x
+(char) $20 = 0x2c
+(lldb) expr -f hex -- char x = *((char *)(buffer)+1); x
+(char) $21 = 0x68
+(lldb) expr -f hex -- char x = *((char *)(buffer)+2); x
+(char) $22 = 0x21
+(lldb) expr -f hex -- char x = *((char *)(buffer)+3); x
+(char) $23 = 0x08
+(lldb) f
+frame #0: 0x0000000100000ec5 a.out`main(argc=2, argv=0x00007fff5fbffb50) + 437 at hw3.c:55
+   52  	  /* second stage */
+   53  	  /* 'g' -> swap bite b5 and b3, swap bits b4 and b2 */
+   54  	
+-> 55  	  free(buffer);
+   56  	
+   57  	  return 0;
+   58  	}
+

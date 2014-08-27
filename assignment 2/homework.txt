@@ -1,0 +1,125 @@
+HW #2
+Alex Globus
+
+
+2.59 -- Write a C expression that will yield a word consisting of the least significant byte of x, and the remaining bytes of y. For operands x = 0x89ABCDEF and y = 0x76543210, this would give 0x765432EF.
+
+  unsigned int x = 0x89ABCDEF, y = 0x76543210, result;
+  result = (x & 0xff) | (y & ~0xff);
+
+
+2.61 -- Write C expressions that evaluate to 1 when the following conditions are true, and to 0 when they are false. Assume x is of type int.
+A. Any bit of x equals 1.
+B. Any bit of x equals 0.
+C. Any bit in the least significant byte of x equals 1.
+D. Any bit in the most significant byte of x equals 0.
+Your code should follow the bit-level integer coding rules (page 120), with the additional restriction that you may not use equality (==) or inequality (!=) tests.
+
+A. !!x 
+B. !!~x
+C. !!(x & 0xff)
+D. !!(x & 0x000000ff)
+
+
+2.66 -- Write code to implement the following function:
+/*
+ * Generate mask indicating leftmost 1 in x.  Assume w=32.
+ * For example 0xFF00 -> 0x8000, and 0x6600 --> 0x4000.
+ * If x = 0, then return 0.
+ */
+int leftmost_one(unsigned x);
+
+int leftmost_one(unsigned x) {
+  /* smear the 1's across the bits and then subtract all but the msb */
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  return x - (x >> 1); /* 1111 1111 1111 1111 - 0111 1111 1111 1111 (could also use xor here), but x must be unsigned to perform logical shift, arithmetic shift would occur with a signed int and the result would be the same  */
+}
+
+
+2.76 -- Suppose we are given the task of generating code to multiply integer variable x by various different constant factors K. To be efficient, we want to use only the operations +, -, and <<. For the following values of K, write C expressions to perform the multiplication using at most three operations per expression.
+
+A. K = 17: (x << 4) + x
+B. K = −7: -(x << 3) + x
+C. K = 60: (x << 6) - (x << 2)
+D. K = −112: - (x << 7) + (x << 4)
+
+
+
+2.86 -- Consider a 16-bit floating-point representation based on the IEEE floating-point format, with one sign bit, seven exponent bits (k = 7), and eight fraction bits (n = 8). The exponent bias is 27−1 − 1 = 63.
+Fill in the table that follows for each of the numbers given, with the following instructions for each column:
+
+Description         Hex       M        E         V  
+
+-0                 0x8000     0       -62       -0
+
+Smallest val > 2   0x40001  1+2^-8     1    2^8+1 / 2^7
+
+512                0x4080     1        69        -
+
+largest denorm.    0x00FF  2^8-1/2^8  -62   2^8-1 x 2^-70
+
+-inf               0xFF       -        -         -
+
+0x3BB0              -       13/16     -4       13/256
+
+2.9 -- Around 250 B.C., the Greek mathematician Archimedes proved that 223/71 < π < 22/7. Had he had access to a computer and the standard library <math.h>, he would have been able to determine that the single-precision floating-point approximation of π has the hexadecimal representation 0x40490FDB. Of course, all of these are just approximations, since π is not rational.
+
+A. What is the fractional binary number denoted by this floating-point value?
+
+3.141592 -> binary = 11.001001000011...
+
+B. What is the fractional binary representation of 22/7? Hint: See Problem 2.82. 7
+
+22/7 = 11.001001001001...
+
+C. At what bit position (relative to the binary point) do these two approximations to π diverge?
+
+9 positions past the binary point, is where the two start to differ.
+
+
+7.9 -- When this program is compiled and executed on a Linux system, it prints the string “0x55\n” and terminates normally, even though p2 never initializes variable main. Can you explain this? 
+
+There can't be multiple definitions of the main symbol. Here, the linker is resolving the symbol in bar6 to the main() function in foo6. If this is true, then the first byte at the memory location of main should be 0x55. We can verify this pretty easily:
+
+merlin% lldb a.out
+Current executable set to 'a.out' (x86_64).
+(lldb) x/x main
+0x100000f40: 0xe5894855
+
+Makes sense that 0x55 byte is at the end, this is a little endian system and the bytes ordered from LSB to MSB.
+
+merlin% otool -tvj a.out | grep -A1 main
+_main:
+0000000100000f40	55              	pushq	%rbp
+
+
+
+7.15 -- Performing the following tasks will help you become more familiar with the various tools for manipulating object files.
+
+A. How many object files are contained in the versions of libc.a and libm.a on your system?
+
+aglobus@ada:/usr/lib32$ ar -t libc.a | wc -l
+1523
+aglobus@ada:/usr/lib32$ ar -t libm.a | wc -l
+407
+
+B. Does gcc -O2 produce different executable code than gcc -O2 -g?
+
+Yes, the -O2 flag sets gcc’s optimization level, but gcc will also allow you to run -g with any level of -O. From the man pages, “The shortcuts taken by optimized code may occasionally produce surprising results: some variables you declared may not exist at all; flow of control may briefly move where you did not expect it; some statements may not be executed because they compute constant results or their values are already at hand; some statements may execute in different places because they have been moved out of loops.” It’s possible to debug optimized output and it can produce different executable code. 
+
+C. What shared libraries does the gcc driver on your system use?
+
+On my macintosh (substituting clang for gcc):
+
+On the school’s linux box:
+
+aglobus@ada:~$ ldd /usr/bin/gcc
+	linux-vdso.so.1 =>  (0x00007fff949f6000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fdf6762f000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fdf67a16000)
+
+

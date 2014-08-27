@@ -1,0 +1,204 @@
+Assignment #6
+Alex Globus
+8.10, 8.13, 8.14, 8.15, 8.16, 8.18, 8.19, 8.23, 8.25
+
+8.10
+
+In this chapter, we have introduced some functions with unusual call and return behaviors: setjmp, longjmp, execve, and fork. Match each function with one of the following behaviors:
+
+A. Called once, returns twice.
+fork
+B. Called once, never returns.
+longjmp, execve
+C. Called once, returns one or more times.
+setjmp
+
+
+
+
+8.13
+
+What is one possible output of the following program?
+
+#include "csapp.h" 
+int main()
+{
+  int x = 3;
+  if (Fork() != 0)
+    printf("x="%d\n", ++x);
+
+  printf("x=%d\n", --x);
+  exit(0);
+}
+
+Output:
+x=4
+x=3
+x=2
+
+The fork() returns a value of 0 to the child process and the process ID to the parent process. The child process will hit both printf statements (outputting 4 and 3) and the parent process will only output 2.
+
+
+
+
+8.14
+
+void doit()
+{
+  if (fork() == 0) {
+    fork();
+    printf("hello\n");
+    exit(0);
+  }
+  return;
+}
+
+int main(int argc, const char *argv[])
+{
+  doit();
+  printf("hello\n");
+  exit(0);
+}
+
+How many “hello” output lines does this program print?
+
+Three. Twice from the doit() function and once from main. The first fork() will only execute the if statement for the child process and that child forks again, meaning that the printf statement immediately afterwards is invoked for the inital fork() and its fork().
+
+
+
+
+8.15
+
+void doit()
+{
+  if (fork() == 0) {
+    fork();
+    printf("hello\n");
+    return;
+  }
+  return;
+}
+
+int main(int argc, const char *argv[])
+{
+  doit();
+  printf("hello\n");
+  exit(0);
+}
+
+How many “hello” output lines does this program print?
+
+Twice more than problem 8.14; five times. Each fork statement returns and calls the printf statement again. Since there are two fork calls before the return, it gets called two more times.
+
+
+
+8.16
+
+int counter = 1;
+
+int main(int argc, const char *argv[])
+{
+  if (fork() == 0) {
+    counter--;
+    exit(0);
+  } else {
+    wait(NULL);
+    printf("counter = %d\n", ++counter);
+  }
+  exit(0);
+}
+
+What is the output of the following program?
+
+counter = 2
+
+
+
+8.18
+
+Determine which of the following outputs are possible. Note: The atexit function takes a pointer to a function and adds it to a list of functions (initially empty) that will be called when the exit function is called.
+
+void end(void)
+{
+  printf("2");
+}
+
+int main(int argc, const char *argv[])
+{
+  if (fork() == 0)
+    atexit(end);
+  if (fork() == 0)
+    printf("0");
+  else
+    printf("1");
+  exit(0);
+}
+
+
+A. 112002
+B. 211020
+C. 102120
+D. 122001
+E. 100212
+
+
+Out of the possible list, A and E should be the only ones called. The last number to be printed should be 2, since atexit is invoked after exit is called and it should happen last at the very least (other child processes might reach exit(0) before the original process does).
+
+
+
+8.19
+
+How many lines of output does the following function print? Give your answer as a function of n. Assume n ≥ 1.
+
+void foo(int n)
+{
+  int i;
+
+  for (i = 0; i < n; i++)
+    fork();
+  printf("hello\n");
+  exit(0);
+}
+
+There should be n^2 printf calls, since after the fork call there are two processes, calling fork on those two again will yield a total of four, eight, etc. 
+
+
+
+8.23
+
+One of your colleagues is thinking of using signals to allow a parent process to count events that occur in a child process. The idea is to notify the parent each time an event occurs by sending it a signal, and letting the parent’s signal handler increment a global counter variable, which the parent can then inspect after the child has terminated. However, when he runs the test program in Figure 8.41 on his system, he discovers that when the parent calls printf, counter always has a value of 2, even though the child has sent five signals to the parent. Perplexed, he comes to you for help. Can you explain the bug?
+
+Signals aren't queued. Since these are all of the same type, all the signals are processed by the same signal handler. While the handler is dealing with the first signal, the other signals are sent and dropped. 
+
+
+
+
+8.25
+
+
+Write a version of the fgets function, called tfgets, that times out after 5 seconds. The tfgets function accepts the same inputs as fgets. If the user doesn’t type an input line within 5 seconds, tfgets returns NULL. Otherwise, it returns a pointer to the input line.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <setjmp.h>
+
+jmp_buf env;
+
+void sigalrm_handler(int sig)
+{
+  alarm(0); //cancel any active
+  longjmp(env, 1); //jump
+/* If longjmp() is invoked with a second argument of 0, 1 will be returned instead. */
+}
+
+char *tfgets(char * restrict str, int size, FILE * restrict stream) {
+  signal(SIGALRM, sigalrm_handler); //set handler
+  alarm(5); //go in 5 seconds
+
+  if (setjmp(env) != 0) //save, returns nonzero if returning form longjmp
+    return NULL;
+  else
+    return fgets(str, size, stream);
+
+}
